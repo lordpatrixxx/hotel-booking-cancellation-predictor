@@ -1,0 +1,3 @@
+# Fully resolved versions are generated after setup.
+-r requirements.in
+
