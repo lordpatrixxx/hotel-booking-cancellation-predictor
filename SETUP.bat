@@ -2,49 +2,91 @@
 setlocal EnableExtensions
 cd /d "%~dp0"
 
+echo =======================================================
+echo Setting up Hotel Booking Cancellation Predictor
+echo =======================================================
+
+:: 1. Locate available Python executable (Python 3.10+)
+set "PY_CMD="
 where py >nul 2>nul
-if errorlevel 1 (
-    echo Python was not found. Install Python 3.10 or newer, then run this file again.
+if not errorlevel 1 (
+    py -3.12 --version >nul 2>nul && set "PY_CMD=py -3.12"
+    if not defined PY_CMD (
+        py -3 --version >nul 2>nul && set "PY_CMD=py -3"
+    )
+)
+if not defined PY_CMD (
+    where python >nul 2>nul
+    if not errorlevel 1 (
+        python --version >nul 2>nul && set "PY_CMD=python"
+    )
+)
+if not defined PY_CMD (
+    where python3 >nul 2>nul
+    if not errorlevel 1 (
+        python3 --version >nul 2>nul && set "PY_CMD=python3"
+    )
+)
+
+if not defined PY_CMD (
+    echo [ERROR] Python was not found on your system PATH.
+    echo Please install Python 3.10 or newer from https://www.python.org/
+    echo Make sure to check the box "Add Python to PATH" during installation.
     pause
     exit /b 1
 )
 
+echo [OK] Using Python command: %PY_CMD%
+
+:: 2. Create virtual environment if missing
 if not exist ".venv\Scripts\python.exe" (
-    echo Creating the project environment...
-    py -3.12 -m venv .venv
-    if errorlevel 1 py -3 -m venv .venv
+    echo [*] Creating virtual environment in .venv...
+    %PY_CMD% -m venv .venv
     if errorlevel 1 (
-        echo Could not create the project environment.
+        echo [ERROR] Could not create the virtual environment.
         pause
         exit /b 1
     )
+    echo [OK] Virtual environment created.
+) else (
+    echo [OK] Virtual environment already exists in .venv.
 )
 
-echo Installing project packages...
-".venv\Scripts\python.exe" -m pip install --upgrade pip
-if errorlevel 1 goto :failed
-".venv\Scripts\python.exe" -m pip install -r requirements.txt
-if errorlevel 1 goto :failed
+:: 3. Upgrade pip
+echo [*] Checking pip...
+".venv\Scripts\python.exe" -m pip install --upgrade pip --quiet
 
-echo Downloading data and training the model...
-".venv\Scripts\python.exe" train.py
-if errorlevel 1 goto :failed
+:: 4. Install dependencies
+echo [*] Installing dependencies...
+".venv\Scripts\python.exe" -m pip install -r requirements-lock.txt
+if errorlevel 1 (
+    echo [*] Locked versions had a resolution issue on this platform; trying requirements.in...
+    ".venv\Scripts\python.exe" -m pip install -r requirements.in
+    if errorlevel 1 goto :failed
+)
+echo [OK] Dependencies installed successfully.
 
-echo Building report and executed notebook...
-".venv\Scripts\python.exe" scripts\build_deliverables.py
-if errorlevel 1 goto :failed
-
-echo Running project checks...
-".venv\Scripts\python.exe" -m pytest -q
-if errorlevel 1 goto :failed
+:: 5. Check model artifacts
+if not exist "artifacts\cancellation_model.joblib" (
+    echo [*] Model artifact not found. Training model now...
+    ".venv\Scripts\python.exe" train.py
+    if errorlevel 1 goto :failed
+) else (
+    echo [OK] Pre-trained model found in artifacts\cancellation_model.joblib.
+)
 
 echo.
-echo Setup completed. Double-click START_PROJECT.bat to open the GUI.
+echo =======================================================
+echo [SUCCESS] Setup completed!
+echo Double-click START_PROJECT.bat to launch the application.
+echo =======================================================
 pause
 exit /b 0
 
 :failed
 echo.
-echo Setup stopped because a required step failed. Read the message above, then run SETUP.bat again.
+echo =======================================================
+echo [ERROR] Setup encountered an issue. Please review the message above.
+echo =======================================================
 pause
 exit /b 1

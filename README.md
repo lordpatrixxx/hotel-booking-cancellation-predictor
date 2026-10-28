@@ -9,11 +9,30 @@ VSEC Data Science Laboratory mini project for B.Tech Information Technology, Sec
 
 ## Start the project
 
-1. Double-click `SETUP.bat` once. It creates the local environment, installs packages, downloads the public source data, trains the models, generates the report and runs the checks.
-2. Double-click `START_PROJECT.bat` to open the GUI in a browser.
-3. Use `STOP_PROJECT.bat` only if you need to close a running copy of this project.
+### 1-Click Launch (Windows)
+1. Double-click `SETUP.bat` once. It automatically locates Python, creates a virtual environment `.venv`, and installs the dependencies. The repository already includes the dataset and pre-trained model.
+2. Double-click `START_PROJECT.bat` to launch the Streamlit GUI in your browser.
+3. Use `STOP_PROJECT.bat` if you need to shut down the background server.
 
-Python 3.10 or newer is needed. The first setup needs an internet connection; after it finishes, the model and GUI work locally.
+### Terminal Launch (Cross-Platform)
+```bash
+# 1. Clone repository
+git clone https://github.com/lordpatrixxx/hotel-booking-cancellation-predictor.git
+cd hotel-booking-cancellation-predictor
+
+# 2. Create environment & install dependencies
+python -m venv .venv
+# On Windows:
+.\.venv\Scripts\activate
+# On macOS / Linux:
+source .venv/bin/activate
+
+pip install --upgrade pip
+pip install -r requirements-lock.txt
+
+# 3. Launch Streamlit application
+streamlit run app.py
+```
 
 ## GUI pages
 
